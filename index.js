@@ -1,7 +1,7 @@
 const express = require("express");
 require("dotenv").config();
-
 const ErrorHandler = require("./middlewares/errorHandler");
+const ConnectDB = require("./db/connect");
 
 const app = express();
 
@@ -9,6 +9,7 @@ const app = express();
 
 const startTheServer = async () => {
   try {
+    await ConnectDB(process.env.MONGODB_URI);
     app.listen(process.env.HTTP_PORT);
     console.log("server is ready");
   } catch (err) {
