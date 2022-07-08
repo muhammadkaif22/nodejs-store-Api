@@ -6,17 +6,30 @@ const asyncWapper = require("../middlewares/asyncWapper");
 
 const GetAllProducts = asyncWapper(async (req, res) => {
   // sorting
-  const { featured, company, search_query } = req.query;
-  const queryObj = {};
+
+  // querys
+  const { featured, company, search_query, sortby } = req.query;
+  let queryObj = {};
 
   if (featured) queryObj.featured = featured === "true" ? true : false;
+
   if (company) queryObj.company = company;
+
+  // search
   if (search_query) queryObj.name = { $regex: search_query };
 
   console.log(req.query);
   console.log(queryObj);
 
-  const action = await ProductsModal.find(queryObj);
+  const fetchData = ProductsModal.find(queryObj);
+
+  // sorting the data
+  if (sortby) {
+    const sortQuerys = sortby.split(",").join(" ");
+    fetchData.sort(sortQuerys);
+  }
+  const action = await fetchData;
+
   if (action.length !== 0) {
     res
       .status(200)
