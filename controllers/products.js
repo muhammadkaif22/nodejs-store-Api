@@ -2,11 +2,28 @@ const ProductsModal = require("../models/Product");
 const FakeData_Products = require("../fakeData/products.json");
 const asyncWapper = require("../middlewares/asyncWapper");
 
+// ===================> CRUD Operations <====================
+
 const GetAllProducts = asyncWapper(async (req, res) => {
-  const action = await ProductsModal.find({});
-  res
-    .status(200)
-    .json({ msg: "all products fetched successfully", data: action });
+  // sorting
+  const { featured, company, search_query } = req.query;
+  const queryObj = {};
+
+  if (featured) queryObj.featured = featured === "true" ? true : false;
+  if (company) queryObj.company = company;
+  if (search_query) queryObj.name = { $regex: search_query };
+
+  console.log(req.query);
+  console.log(queryObj);
+
+  const action = await ProductsModal.find(queryObj);
+  if (action.length !== 0) {
+    res
+      .status(200)
+      .json({ msg: "all products fetched successfully", data: action });
+  } else {
+    res.status(200).json({ msg: "no record founded" });
+  }
 });
 
 const GetProduct = asyncWapper(async (req, res) => {
