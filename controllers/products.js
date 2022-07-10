@@ -6,7 +6,8 @@ const asyncWapper = require("../middlewares/asyncWapper");
 
 const GetAllProducts = asyncWapper(async (req, res) => {
   // querys
-  const { featured, company, search_query, sortby, selecteFld } = req.query;
+  const { featured, company, search_query, sortby, selecteFld, number_filter } =
+    req.query;
   let queryObj = {};
 
   if (featured) queryObj.featured = featured === "true" ? true : false;
@@ -14,9 +15,32 @@ const GetAllProducts = asyncWapper(async (req, res) => {
   if (company) queryObj.company = company;
 
   // search
-  if (search_query) queryObj.name = { $regex: search_query };
+  if (search_query) queryObj.name = { $regex: search_query, $options: "i" };
+
+  if (number_filter) {
+    const operatorsValue = {
+      ">": "$gt",
+      ">=": "$gte",
+      "=": "$eq",
+      "<": "$lt",
+      "<=": "$lte",
+    };
+
+    const regEx = /\b(<|>|>=|=|<|<=)\b/g;
+    let filters = number_filter.replace(regEx, (m) => `-${operatorsValue[m]}-`);
+    const FilterOptions = ["price", "rating"];
+
+    filters = filters.split(",").forEach((item) => {
+      const [fld, operation, val] = item.split("-");
+      if (FilterOptions.includes(fld)) {
+        queryObj[fld] = { [operation]: Number(val) };
+      }
+    });
+  }
 
   const fetchData = ProductsModal.find(queryObj);
+
+  // pagination
   const page = Number(req.query.page) || 1;
   const limit = Number(req.query.limit) || 10;
   const skip = (page - 1) * limit;
@@ -33,6 +57,7 @@ const GetAllProducts = asyncWapper(async (req, res) => {
     const FillterdFld = selecteFld.split(",").join(" ");
     fetchData.select(FillterdFld);
   }
+
   const action = await fetchData;
 
   if (action.length !== 0) {
@@ -44,6 +69,7 @@ const GetAllProducts = asyncWapper(async (req, res) => {
   } else {
     res.status(200).json({ msg: "no record founded" });
   }
+  console.log(queryObj);
 });
 
 const GetProduct = asyncWapper(async (req, res) => {
