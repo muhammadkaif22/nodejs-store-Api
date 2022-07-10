@@ -17,6 +17,7 @@ const GetAllProducts = asyncWapper(async (req, res) => {
   // search
   if (search_query) queryObj.name = { $regex: search_query, $options: "i" };
 
+  // numberic filter
   if (number_filter) {
     const operatorsValue = {
       ">": "$gt",
